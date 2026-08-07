@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom';
 import MovieEditor from '../components/admin/MovieEditor';
 import MovieList from '../components/admin/MovieList';
 
+const ADMIN_USERNAME = 'kyrinliong';
 const ADMIN_PASSWORD = 'buffyisawesome';
 
 export default function Admin() {
   const [authenticated, setAuthenticated] = useState(false);
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [view, setView] = useState('dashboard'); // dashboard | add | edit | list
@@ -44,12 +46,12 @@ export default function Admin() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
       setAuthenticated(true);
       sessionStorage.setItem('admin_auth', 'true');
       setError('');
     } else {
-      setError('Wrong password, darling! 💅');
+      setError('Wrong credentials, darling! 💅');
     }
   };
 
@@ -80,13 +82,21 @@ export default function Admin() {
         <div className="card max-w-md w-full p-8 text-center">
           <div className="text-6xl mb-4">🔐</div>
           <h1 className="font-cursive text-4xl text-rosy-pink mb-2">CMS Access</h1>
-          <p className="font-body text-dusty-rose mb-6">Enter the secret password to manage movies</p>
+          <p className="font-body text-dusty-rose mb-6">Sign in to manage your movie empire</p>
           <form onSubmit={handleLogin} className="space-y-4">
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Username"
+              className="w-full px-4 py-3 rounded-xl bg-white border border-pale-blush text-warm-brown placeholder-dusty-rose font-body text-lg focus:outline-none focus:border-rosy-pink focus:ring-2 focus:ring-rosy-pink/20 transition-all"
+              autoFocus
+            />
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password..."
+              placeholder="Password"
               className="w-full px-4 py-3 rounded-xl bg-white border border-pale-blush text-warm-brown placeholder-dusty-rose font-body text-center text-lg focus:outline-none focus:border-rosy-pink focus:ring-2 focus:ring-rosy-pink/20 transition-all"
               autoFocus
             />

@@ -3,8 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 
 export default function SignIn() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('kyrinliong');
+  const [password, setPassword] = useState('buffyisawesome');
   const [signedIn, setSignedIn] = useState(false);
   const navigate = useNavigate();
 
@@ -42,10 +42,10 @@ export default function SignIn() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block font-body text-sm text-warm-brown font-semibold mb-1.5">
-              Email
+              Email or Username
             </label>
             <input
-              type="email"
+              type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"

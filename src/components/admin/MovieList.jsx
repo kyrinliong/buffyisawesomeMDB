@@ -9,16 +9,20 @@ const CATEGORY_LABELS = {
   'fan-favorite': '💖 Fan Favorite',
 };
 
-export default function MovieList({ onEdit, limit }) {
+export default function MovieList({ onEdit, limit, initialFilter = 'all' }) {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [filterCategory, setFilterCategory] = useState('all');
+  const [filterCategory, setFilterCategory] = useState(initialFilter);
   const [error, setError] = useState('');
 
   useEffect(() => {
     loadMovies();
   }, []);
+
+  useEffect(() => {
+    setFilterCategory(initialFilter);
+  }, [initialFilter]);
 
   const loadMovies = async () => {
     try {

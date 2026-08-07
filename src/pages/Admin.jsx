@@ -13,7 +13,8 @@ export default function Admin() {
   const [error, setError] = useState('');
   const [view, setView] = useState('dashboard'); // dashboard | add | edit | list
   const [editingMovie, setEditingMovie] = useState(null);
-  const [stats, setStats] = useState({ total: 0, inTheaters: 0, comingSoon: 0, streaming: 0, blockbusters: 0 });
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [stats, setStats] = useState({ total: 0, inTheaters: 0, comingSoon: 0, streaming: 0, blockbusters: 0, forYou: 0, fanFavorites: 0 });
 
   useEffect(() => {
     const saved = sessionStorage.getItem('admin_auth');
@@ -39,6 +40,8 @@ export default function Admin() {
           comingSoon: data.filter((m) => m.category === 'coming-soon').length,
           streaming: data.filter((m) => m.category === 'streaming-soon').length,
           blockbusters: data.filter((m) => m.category === 'major-blockbuster').length,
+          forYou: data.filter((m) => m.category === 'for-you').length,
+          fanFavorites: data.filter((m) => m.category === 'fan-favorite').length,
         });
       }
     } catch (e) { /* offline - use empty stats */ }
@@ -69,6 +72,11 @@ export default function Admin() {
     setView('dashboard');
     setEditingMovie(null);
     loadStats();
+  };
+
+  const handleFilterClick = (category) => {
+    setCategoryFilter(category);
+    setView('list');
   };
 
   const handleLogout = () => {
@@ -128,19 +136,25 @@ export default function Admin() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-8">
         {[
-          { label: 'Total Movies', value: stats.total, icon: '🎬', color: 'bg-rosy-pink/10 border-rosy-pink/30' },
-          { label: 'In Theaters', value: stats.inTheaters, icon: '🍿', color: 'bg-golden-peach/20 border-golden-peach/50' },
-          { label: 'Coming Soon', value: stats.comingSoon, icon: '🎟️', color: 'bg-meadow-green/10 border-meadow-green/30' },
-          { label: 'Streaming', value: stats.streaming, icon: '📺', color: 'bg-blush border-pale-blush' },
-          { label: 'Blockbusters', value: stats.blockbusters, icon: '⭐', color: 'bg-rosy-pink/5 border-rosy-pink/20' },
+          { label: 'Total Movies', value: stats.total, icon: '🎬', color: 'bg-rosy-pink/10 border-rosy-pink/30', category: 'all' },
+          { label: 'In Theaters', value: stats.inTheaters, icon: '🍿', color: 'bg-golden-peach/20 border-golden-peach/50', category: 'in-theaters' },
+          { label: 'Coming Soon', value: stats.comingSoon, icon: '🎟️', color: 'bg-meadow-green/10 border-meadow-green/30', category: 'coming-soon' },
+          { label: 'Streaming', value: stats.streaming, icon: '📺', color: 'bg-blush border-pale-blush', category: 'streaming-soon' },
+          { label: 'Blockbusters', value: stats.blockbusters, icon: '⭐', color: 'bg-rosy-pink/5 border-rosy-pink/20', category: 'major-blockbuster' },
+          { label: 'For You', value: stats.forYou, icon: '🌸', color: 'bg-rosy-pink/10 border-rosy-pink/20', category: 'for-you' },
+          { label: 'Fan Favorites', value: stats.fanFavorites, icon: '💖', color: 'bg-blush border-pale-blush', category: 'fan-favorite' },
         ].map((stat) => (
-          <div key={stat.label} className={`card p-4 text-center border ${stat.color}`}>
-            <div className="text-3xl mb-1">{stat.icon}</div>
-            <div className="font-cursive text-3xl text-warm-brown">{stat.value}</div>
+          <button
+            key={stat.label}
+            onClick={() => handleFilterClick(stat.category)}
+            className={`card p-3 text-center border ${stat.color} cursor-pointer hover:scale-105 hover:shadow-card-hover transition-all`}
+          >
+            <div className="text-2xl mb-1">{stat.icon}</div>
+            <div className="font-cursive text-2xl text-warm-brown">{stat.value}</div>
             <div className="font-body text-xs text-dusty-rose mt-1">{stat.label}</div>
-          </div>
+          </button>
         ))}
       </div>
 
@@ -169,11 +183,11 @@ export default function Admin() {
       )}
 
       {view === 'dashboard' && (
-        <MovieList onEdit={handleEdit} limit={5} />
+        <MovieList onEdit={handleEdit} limit={5} initialFilter="all" />
       )}
 
       {view === 'list' && (
-        <MovieList onEdit={handleEdit} />
+        <MovieList onEdit={handleEdit} initialFilter={categoryFilter} />
       )}
     </div>
   );

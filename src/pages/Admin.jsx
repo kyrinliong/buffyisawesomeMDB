@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import MovieEditor from './MovieEditor';
-import MovieList from './MovieList';
-import '../../index.css';
+import MovieEditor from '../components/admin/MovieEditor';
+import MovieList from '../components/admin/MovieList';
 
 const ADMIN_PASSWORD = 'buffyisawesome';
 

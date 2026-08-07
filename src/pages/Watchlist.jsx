@@ -1,12 +1,31 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import MovieCard from '../components/cards/MovieCard';
 import Button from '../components/ui/Button';
 import { useWatchlist } from '../context/WatchlistContext';
 import movies from '../data/movies';
+import { fetchMovies } from '../lib/api';
+
+function normalizeMovie(m) {
+  if (!m) return m;
+  return {
+    ...m,
+    posterUrl: m.poster_url || m.posterUrl,
+    starRating: m.star_rating || m.starRating,
+    releaseDate: m.release_date || m.releaseDate,
+  };
+}
 
 export default function Watchlist() {
   const { watchlist } = useWatchlist();
-  const watchlistMovies = movies.filter((m) => watchlist.includes(m.id));
+  const [dbMovies, setDbMovies] = useState(null);
+
+  useEffect(() => {
+    fetchMovies().then((data) => setDbMovies((data || []).map(normalizeMovie))).catch(() => {});
+  }, []);
+
+  const allMovies = dbMovies || movies;
+  const watchlistMovies = allMovies.filter((m) => watchlist.includes(m.id));
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">

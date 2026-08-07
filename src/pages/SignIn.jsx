@@ -12,7 +12,7 @@ export default function SignIn() {
     e.preventDefault();
     if (email && password) {
       setSignedIn(true);
-      setTimeout(() => navigate('/'), 1500);
+      setTimeout(() => navigate('/admin'), 1500);
     }
   };
 

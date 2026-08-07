@@ -1,40 +1,74 @@
 import { useSearchParams } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
 import MovieCard from '../components/cards/MovieCard';
 import movies from '../data/movies';
-import { useState, useMemo } from 'react';
+import { fetchMovies, searchMovies } from '../lib/api';
+
+function normalizeMovie(m) {
+  if (!m) return m;
+  return {
+    ...m,
+    posterUrl: m.poster_url || m.posterUrl,
+    backdropUrl: m.backdrop_url || m.backdropUrl,
+    starRating: m.star_rating || m.starRating,
+    releaseDate: m.release_date || m.releaseDate,
+    isComingSoon: m.is_coming_soon ?? m.isComingSoon,
+    voteCount: m.vote_count || m.voteCount,
+    streamingOn: m.streaming_on || m.streamingOn,
+    weekendGross: m.weekend_gross || m.weekendGross,
+    totalGross: m.total_gross || m.totalGross,
+    boxOffice: m.boxOffice || (m.weekend_gross ? { weekendGross: m.weekend_gross, totalGross: m.total_gross } : undefined),
+  };
+}
 
 export default function Search() {
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
   const [activeGenres, setActiveGenres] = useState([]);
+  const [dbMovies, setDbMovies] = useState(null);
+
+  useEffect(() => {
+    loadFromDb();
+  }, [query]);
+
+  const loadFromDb = async () => {
+    try {
+      const data = query ? await searchMovies(query) : await fetchMovies();
+      setDbMovies((data || []).map(normalizeMovie));
+    } catch {
+      setDbMovies(null);
+    }
+  };
+
+  const allMovies = dbMovies || movies;
 
   const allGenres = useMemo(() => {
     const genreSet = new Set();
-    movies.forEach((m) => m.genres.forEach((g) => genreSet.add(g)));
+    allMovies.forEach((m) => m.genres && m.genres.forEach((g) => genreSet.add(g)));
     return Array.from(genreSet).sort();
-  }, []);
+  }, [allMovies]);
 
   const filteredMovies = useMemo(() => {
-    let results = movies;
+    let results = allMovies;
 
-    if (query) {
+    if (query && !dbMovies) {
       const q = query.toLowerCase();
       results = results.filter(
         (m) =>
           m.title.toLowerCase().includes(q) ||
-          m.genres.some((g) => g.toLowerCase().includes(q)) ||
-          m.type.toLowerCase().includes(q)
+          (m.genres && m.genres.some((g) => g.toLowerCase().includes(q))) ||
+          (m.type && m.type.toLowerCase().includes(q))
       );
     }
 
     if (activeGenres.length > 0) {
       results = results.filter((m) =>
-        activeGenres.some((g) => m.genres.includes(g))
+        m.genres && activeGenres.some((g) => m.genres.includes(g))
       );
     }
 
     return results;
-  }, [query, activeGenres]);
+  }, [allMovies, query, activeGenres, dbMovies]);
 
   const toggleGenre = (genre) => {
     setActiveGenres((prev) =>

@@ -1,4 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import StarRating from '../components/ui/StarRating';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
@@ -7,14 +8,51 @@ import MovieCard from '../components/cards/MovieCard';
 import ScrollableRow from '../components/carousels/ScrollableRow';
 import { useWatchlist } from '../context/WatchlistContext';
 import movies from '../data/movies';
-import { useState } from 'react';
+import { fetchMovie, fetchMovies } from '../lib/api';
+
+function normalizeMovie(m) {
+  if (!m) return m;
+  return {
+    ...m,
+    posterUrl: m.poster_url || m.posterUrl,
+    backdropUrl: m.backdrop_url || m.backdropUrl,
+    starRating: m.star_rating || m.starRating,
+    releaseDate: m.release_date || m.releaseDate,
+    isComingSoon: m.is_coming_soon ?? m.isComingSoon,
+    voteCount: m.vote_count || m.voteCount,
+    streamingOn: m.streaming_on || m.streamingOn,
+    weekendGross: m.weekend_gross || m.weekendGross,
+    totalGross: m.total_gross || m.totalGross,
+    boxOffice: m.boxOffice || (m.weekend_gross ? { weekendGross: m.weekend_gross, totalGross: m.total_gross } : undefined),
+  };
+}
 
 export default function MovieDetail() {
   const { id } = useParams();
-  const movie = movies.find((m) => m.id === parseInt(id));
-  const { toggleWatchlist, isInWatchlist, toggleWatched, isWatched, rateMovie, getRating } =
-    useWatchlist();
+  const [dbMovie, setDbMovie] = useState(null);
+  const [relatedMovies, setRelatedMovies] = useState([]);
+  const { toggleWatchlist, isInWatchlist, toggleWatched, isWatched, rateMovie, getRating } = useWatchlist();
   const [showTrailer, setShowTrailer] = useState(false);
+
+  useEffect(() => {
+    loadMovie();
+  }, [id]);
+
+  const loadMovie = async () => {
+    try {
+      const m = await fetchMovie(id);
+      if (m) {
+        setDbMovie(normalizeMovie(m));
+        // Load related movies
+        const all = await fetchMovies();
+        setRelatedMovies((all || []).map(normalizeMovie).filter((r) => r.id !== m.id).slice(0, 8));
+      }
+    } catch {
+      setDbMovie(null);
+    }
+  };
+
+  const movie = dbMovie || movies.find((m) => m.id === parseInt(id));
   const userRating = getRating(movie?.id);
 
   if (!movie) {

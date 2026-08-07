@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import ScrollableRow from '../components/carousels/ScrollableRow';
 import FeaturedCard from '../components/cards/FeaturedCard';
 import MovieCard from '../components/cards/MovieCard';
@@ -15,17 +16,72 @@ import movies, {
   getComingSoonMovies,
   getStreamingMovies,
 } from '../data/movies';
+import {
+  fetchFeaturedMovies,
+  fetchFanFavorites,
+  fetchInTheaters,
+  fetchComingSoon,
+  fetchStreamingMovies,
+} from '../lib/api';
+
+// Normalize DB movie (snake_case) to match mock data shape (camelCase)
+function normalizeMovie(m) {
+  if (!m) return m;
+  return {
+    ...m,
+    posterUrl: m.poster_url || m.posterUrl,
+    backdropUrl: m.backdrop_url || m.backdropUrl,
+    starRating: m.star_rating || m.starRating,
+    releaseDate: m.release_date || m.releaseDate,
+    isComingSoon: m.is_coming_soon ?? m.isComingSoon,
+    voteCount: m.vote_count || m.voteCount,
+    streamingOn: m.streaming_on || m.streamingOn,
+    weekendGross: m.weekend_gross || m.weekendGross,
+    totalGross: m.total_gross || m.totalGross,
+    boxOffice: m.boxOffice || (m.weekend_gross ? {
+      weekendGross: m.weekend_gross,
+      totalGross: m.total_gross,
+    } : undefined),
+  };
+}
 
 export default function HomePage() {
   const { toggleWatchlist, isInWatchlist } = useWatchlist();
+  const [dbMovies, setDbMovies] = useState(null);
 
-  const featuredMovies = getFeaturedMovies();
-  const fanFavorites = getFanFavorites();
-  const inTheaters = getInTheaters();
-  const comingSoon = getComingSoonMovies();
-  const primeVideoMovies = getStreamingMovies('Prime Video');
+  useEffect(() => {
+    loadAllFromDb();
+  }, []);
 
-  const boxOfficeMovies = movies
+  const loadAllFromDb = async () => {
+    try {
+      const [featured, favorites, theaters, coming, streaming] = await Promise.all([
+        fetchFeaturedMovies(),
+        fetchFanFavorites(),
+        fetchInTheaters(),
+        fetchComingSoon(),
+        fetchStreamingMovies('Prime Video'),
+      ]);
+      setDbMovies({
+        featured: (featured || []).map(normalizeMovie),
+        fanFavorites: (favorites || []).map(normalizeMovie),
+        inTheaters: (theaters || []).map(normalizeMovie),
+        comingSoon: (coming || []).map(normalizeMovie),
+        streaming: (streaming || []).map(normalizeMovie),
+        all: (featured || []).concat(favorites || [], theaters || [], coming || [], streaming || []).map(normalizeMovie),
+      });
+    } catch {
+      setDbMovies(null); // fallback to mock data
+    }
+  };
+
+  const featuredMovies = dbMovies?.featured || getFeaturedMovies();
+  const fanFavorites = dbMovies?.fanFavorites || getFanFavorites();
+  const inTheaters = dbMovies?.inTheaters || getInTheaters();
+  const comingSoon = dbMovies?.comingSoon || getComingSoonMovies();
+  const primeVideoMovies = dbMovies?.streaming || getStreamingMovies('Prime Video');
+
+  const boxOfficeMovies = (dbMovies?.all || movies)
     .filter((m) => m.boxOffice)
     .sort((a, b) => {
       const rankA = a.rank || 99;

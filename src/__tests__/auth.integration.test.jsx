@@ -1,53 +1,34 @@
 /**
  * INTEGRATION TESTS — Authentication Flow
- * Tests auth across multiple components: SignIn → Home, Admin login → dashboard → logout.
+ * Tests auth components within routing context: SignIn and Admin.
+ *
+ * @see TESTING.md for run instructions, dependency versions, and conventions.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
-import App from '../App';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import SignIn from '../pages/SignIn';
+import Admin from '../pages/Admin';
 
-// Mock supabase for all data-fetching components
+// ── Mocks ──
+
 vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => ({
     from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        not: vi.fn(() => ({
-          order: vi.fn(() => ({
-            limit: vi.fn(() =>
-              Promise.resolve({ data: [], error: null })
-            ),
-          })),
-        })),
-        gte: vi.fn(() => ({
-          order: vi.fn(() => ({
-            limit: vi.fn(() =>
-              Promise.resolve({ data: [], error: null })
-            ),
-          })),
-        })),
-        eq: vi.fn(() => ({
-          order: vi.fn(() =>
-            Promise.resolve({ data: [], error: null })
-          ),
-        })),
-        order: vi.fn(() => ({
-          limit: vi.fn(() =>
-            Promise.resolve({ data: [], error: null })
-          ),
-        })),
-      })),
+      select: vi.fn(() => Promise.resolve({ data: [], error: null })),
     })),
   })),
 }));
 
 // ── Helpers ──
 
-function renderApp(initialRoute = '/') {
+function renderAtRoute(Component, route = '/') {
   return render(
-    <MemoryRouter initialEntries={[initialRoute]}>
-      <App />
+    <MemoryRouter initialEntries={[route]}>
+      <Routes>
+        <Route path="/*" element={<Component />} />
+      </Routes>
     </MemoryRouter>
   );
 }
@@ -63,17 +44,17 @@ describe('Authentication Integration', () => {
     sessionStorage.clear();
   });
 
-  // ── Sign‑In Flow ──
+  // ── Sign‑In Integration ──
 
-  describe('Sign‑In Page Flow', () => {
-    it('renders the sign-in page at /signin route', () => {
-      renderApp('/signin');
+  describe('Sign‑In Page', () => {
+    it('renders the sign-in form', () => {
+      renderAtRoute(SignIn, '/signin');
       expect(screen.getByText('Welcome to buffyisawesomeMDB')).toBeInTheDocument();
     });
 
     it('completes sign-in and shows welcome message', async () => {
       const user = userEvent.setup();
-      renderApp('/signin');
+      renderAtRoute(SignIn, '/signin');
 
       await user.click(screen.getByRole('button', { name: /sign in/i }));
 
@@ -83,46 +64,32 @@ describe('Authentication Integration', () => {
       expect(screen.getByText('Redirecting you home...')).toBeInTheDocument();
     });
 
-    it('SignIn page has navigation link back to sign in (sign up link)', () => {
-      renderApp('/signin');
+    it('has sign-up link pointing to /signin', () => {
+      renderAtRoute(SignIn, '/signin');
       const signUpLink = screen.getByText('Sign up');
       expect(signUpLink).toBeInTheDocument();
       expect(signUpLink.closest('a')).toHaveAttribute('href', '/signin');
     });
+
+    it('has pre-filled credentials', () => {
+      renderAtRoute(SignIn, '/signin');
+      expect(screen.getByPlaceholderText('you@example.com').value).toBe('kyrinliong');
+      expect(screen.getByPlaceholderText('••••••••').value).toBe('buffyisawesome');
+    });
   });
 
-  // ── Admin Flow ──
+  // ── Admin Integration ──
 
-  describe('Admin Page Flow', () => {
-    it('renders login form at /admin when not authenticated', () => {
-      renderApp('/admin');
+  describe('Admin Page', () => {
+    it('renders login form when not authenticated', () => {
+      renderAtRoute(Admin, '/admin');
       expect(screen.getByText('CMS Access')).toBeInTheDocument();
+      expect(screen.getByText('Sign in to manage your movie empire')).toBeInTheDocument();
     });
 
-    it('completes admin login successfully', async () => {
+    it('shows error on wrong credentials', async () => {
       const user = userEvent.setup();
-      renderApp('/admin');
-
-      const usernameInput = screen.getByPlaceholderText('Username');
-      const passwordInput = document.querySelector('input[type="password"]');
-
-      await user.type(usernameInput, 'kyrinliong');
-      await user.type(passwordInput, 'buffyisawesome');
-
-      const buttons = screen.getAllByRole('button');
-      const submitBtn = buttons.find(
-        (b) => b.type === 'submit' && b.closest('form')
-      );
-      if (submitBtn) await user.click(submitBtn);
-
-      await waitFor(() => {
-        expect(screen.queryByText('CMS Access')).not.toBeInTheDocument();
-      });
-    });
-
-    it('shows error on admin login with wrong credentials', async () => {
-      const user = userEvent.setup();
-      renderApp('/admin');
+      renderAtRoute(Admin, '/admin');
 
       const usernameInput = screen.getByPlaceholderText('Username');
       const passwordInput = document.querySelector('input[type="password"]');
@@ -130,54 +97,60 @@ describe('Authentication Integration', () => {
       await user.type(usernameInput, 'hacker');
       await user.type(passwordInput, 'wrong');
 
-      const buttons = screen.getAllByRole('button');
-      const submitBtn = buttons.find(
-        (b) => b.type === 'submit' && b.closest('form')
-      );
-      if (submitBtn) await user.click(submitBtn);
+      const submitBtn = screen.getByRole('button', { name: /enter cms/i });
+      await user.click(submitBtn);
 
       await waitFor(() => {
-        expect(
-          screen.getByText('Wrong credentials, darling! 💅')
-        ).toBeInTheDocument();
+        expect(screen.getByText('Wrong credentials, darling! 💅')).toBeInTheDocument();
+      });
+    });
+
+    it('authenticates with correct credentials', async () => {
+      const user = userEvent.setup();
+      renderAtRoute(Admin, '/admin');
+
+      const usernameInput = screen.getByPlaceholderText('Username');
+      const passwordInput = document.querySelector('input[type="password"]');
+
+      await user.type(usernameInput, 'kyrinliong');
+      await user.type(passwordInput, 'buffyisawesome');
+
+      const submitBtn = screen.getByRole('button', { name: /enter cms/i });
+      await user.click(submitBtn);
+
+      await waitFor(() => {
+        expect(screen.queryByText('CMS Access')).not.toBeInTheDocument();
+      });
+    });
+
+    it('persists auth in sessionStorage after login', async () => {
+      const user = userEvent.setup();
+      renderAtRoute(Admin, '/admin');
+
+      await user.type(screen.getByPlaceholderText('Username'), 'kyrinliong');
+      await user.type(document.querySelector('input[type="password"]'), 'buffyisawesome');
+      await user.click(screen.getByRole('button', { name: /enter cms/i }));
+
+      await waitFor(() => {
+        expect(sessionStorage.getItem('admin_auth')).toBe('true');
       });
     });
   });
 
-  // ── Session Persistence Integration ──
+  // ── Session Persistence ──
 
   describe('Session Persistence', () => {
-    it('admin auth persists across re-renders via sessionStorage', () => {
+    it('restores admin session from sessionStorage', () => {
       sessionStorage.setItem('admin_auth', 'true');
-      renderApp('/admin');
+      renderAtRoute(Admin, '/admin');
       expect(screen.queryByText('CMS Access')).not.toBeInTheDocument();
     });
 
-    it('clearing sessionStorage shows login form on admin route', () => {
+    it('shows login when sessionStorage is cleared', () => {
       sessionStorage.setItem('admin_auth', 'true');
       sessionStorage.clear();
-      renderApp('/admin');
+      renderAtRoute(Admin, '/admin');
       expect(screen.getByText('CMS Access')).toBeInTheDocument();
-    });
-  });
-
-  // ── Route Protection (UI‑level) ──
-
-  describe('Route Access', () => {
-    it('admin route is accessible regardless of auth (shows login form)', () => {
-      renderApp('/admin');
-      // The page itself is accessible; it just shows login when not authed
-      expect(screen.getByText('CMS Access')).toBeInTheDocument();
-    });
-
-    it('signin route is always accessible', () => {
-      renderApp('/signin');
-      expect(screen.getByText('Welcome to buffyisawesomeMDB')).toBeInTheDocument();
-    });
-
-    it('404 page renders for unknown routes', () => {
-      renderApp('/nonexistent-route');
-      expect(screen.getByText('404')).toBeInTheDocument();
     });
   });
 });

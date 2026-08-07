@@ -45,6 +45,16 @@ function normalizeMovie(m) {
   };
 }
 
+// Deduplicate array of movies by id
+function dedupe(arr) {
+  const seen = new Set();
+  return (arr || []).filter((m) => {
+    if (seen.has(m.id)) return false;
+    seen.add(m.id);
+    return true;
+  });
+}
+
 export default function HomePage() {
   const { toggleWatchlist, isInWatchlist } = useWatchlist();
   const [dbMovies, setDbMovies] = useState(null);
@@ -62,13 +72,21 @@ export default function HomePage() {
         fetchComingSoon(),
         fetchStreamingMovies('Prime Video'),
       ]);
+      // Normalize and deduplicate each section
+      const normFeatured = dedupe((featured || []).map(normalizeMovie));
+      const normFavorites = dedupe((favorites || []).map(normalizeMovie));
+      const normTheaters = dedupe((theaters || []).map(normalizeMovie));
+      const normComing = dedupe((coming || []).map(normalizeMovie));
+      const normStreaming = dedupe((streaming || []).map(normalizeMovie));
+      // Combine all deduped
+      const all = dedupe([...normFeatured, ...normFavorites, ...normTheaters, ...normComing, ...normStreaming]);
       setDbMovies({
-        featured: (featured || []).map(normalizeMovie),
-        fanFavorites: (favorites || []).map(normalizeMovie),
-        inTheaters: (theaters || []).map(normalizeMovie),
-        comingSoon: (coming || []).map(normalizeMovie),
-        streaming: (streaming || []).map(normalizeMovie),
-        all: (featured || []).concat(favorites || [], theaters || [], coming || [], streaming || []).map(normalizeMovie),
+        featured: normFeatured,
+        fanFavorites: normFavorites,
+        inTheaters: normTheaters,
+        comingSoon: normComing,
+        streaming: normStreaming,
+        all,
       });
     } catch {
       setDbMovies(null); // fallback to mock data

@@ -2,6 +2,8 @@
  * E2E / UI TESTS — Authentication
  *
  * These tests exercise the real browser UI using Playwright.
+ *
+ * @see TESTING.md for run instructions, dependency versions, and conventions.
  * Run: npx playwright test e2e/auth.e2e.test.js
  *
  * Prerequisites: dev server running on http://localhost:3000

@@ -1,6 +1,8 @@
 /**
  * UNIT TESTS — Admin Component (Authentication)
  * Tests login form, credential validation, session persistence, and logout.
+ *
+ * @see TESTING.md for run instructions, dependency versions, and conventions.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';

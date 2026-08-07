@@ -1,6 +1,8 @@
 /**
  * UNIT TESTS — Auth utility functions
  * Tests the core credential validation logic extracted from components.
+ *
+ * @see TESTING.md for run instructions, dependency versions, and conventions.
  */
 import { describe, it, expect } from 'vitest';
 

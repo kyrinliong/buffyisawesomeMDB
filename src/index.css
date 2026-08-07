@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  /* Hide scrollbar for carousels */
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    color: #5C3D4A;
+    background: linear-gradient(180deg, #FFF0F5 0%, #FFF5EE 30%, #FFF8DC 60%, #FFF0F5 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #FFF0F5;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #E8A0BF;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #D483A8;
+  }
+}
+
+@layer components {
+  .section-heading {
+    @apply font-cursive text-3xl md:text-4xl text-rosy-pink font-semibold;
+  }
+
+  .section-subtitle {
+    @apply font-body text-sm md:text-base text-dusty-rose mt-1;
+  }
+
+  .card {
+    @apply bg-card-white rounded-card shadow-card border border-pale-blush/50 transition-all duration-300;
+  }
+
+  .card:hover {
+    @apply shadow-card-hover -translate-y-1;
+  }
+
+  .btn-primary {
+    @apply bg-meadow-green text-white font-body font-semibold px-5 py-2 rounded-full
+           hover:bg-meadow-green-dark transition-all duration-200
+           active:scale-95 cursor-pointer select-none;
+  }
+
+  .btn-secondary {
+    @apply border-2 border-rosy-pink text-rosy-pink font-body font-semibold px-5 py-2 rounded-full
+           hover:bg-rosy-pink hover:text-white transition-all duration-200
+           active:scale-95 cursor-pointer select-none;
+  }
+
+  .btn-ghost {
+    @apply text-dusty-rose font-body px-4 py-2 rounded-full
+           hover:text-rosy-pink hover:bg-rosy-pink/10 transition-all duration-200
+           cursor-pointer select-none;
+  }
+
+  .btn-icon {
+    @apply w-9 h-9 flex items-center justify-center rounded-full
+           bg-card-white border border-pale-blush text-dusty-rose
+           hover:text-rosy-pink hover:border-rosy-pink hover:bg-rosy-pink/5
+           transition-all duration-200 cursor-pointer select-none text-lg;
+  }
+
+  /* Sunrise animation for background */
+  @keyframes sunriseShift {
+    0%, 100% { background-position: 0% 0%; }
+    50% { background-position: 0% 100%; }
+  }
+}

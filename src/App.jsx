@@ -6,6 +6,7 @@ import MovieDetail from './pages/MovieDetail';
 import Search from './pages/Search';
 import Watchlist from './pages/Watchlist';
 import SignIn from './pages/SignIn';
+import Admin from './pages/Admin';
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="/search" element={<Search />} />
           <Route path="/watchlist" element={<Watchlist />} />
           <Route path="/signin" element={<SignIn />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="/genre/:name" element={<Search />} />
           <Route path="/boxoffice" element={<Search />} />
           <Route path="/coming-soon" element={<Search />} />

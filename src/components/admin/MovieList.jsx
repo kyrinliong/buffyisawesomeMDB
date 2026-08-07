@@ -9,12 +9,32 @@ const CATEGORY_LABELS = {
   'fan-favorite': '💖 Fan Favorite',
 };
 
+const SortHeader = ({ column, label, sortBy, sortDir, onClick, className = '' }) => {
+  const active = sortBy === column;
+  return (
+    <th
+      className={`text-left py-3 px-2 font-body text-xs text-dusty-rose uppercase cursor-pointer select-none hover:text-rosy-pink transition-colors ${className}`}
+      onClick={() => onClick(column)}
+      title={`Sort by ${label}`}
+    >
+      <span className="inline-flex items-center gap-1">
+        {label}
+        <span className="text-[10px]">
+          {active ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}
+        </span>
+      </span>
+    </th>
+  );
+};
+
 export default function MovieList({ onEdit, limit, initialFilter = 'all' }) {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState(initialFilter);
   const [error, setError] = useState('');
+  const [sortBy, setSortBy] = useState('');
+  const [sortDir, setSortDir] = useState('asc');
 
   useEffect(() => {
     loadMovies();
@@ -61,13 +81,32 @@ export default function MovieList({ onEdit, limit, initialFilter = 'all' }) {
     }
   };
 
+  const handleSort = (column) => {
+    if (sortBy === column) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortBy(column);
+      setSortDir('asc');
+    }
+  };
+
   const filtered = movies.filter((m) => {
     const matchesSearch = !search || m.title?.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = filterCategory === 'all' || m.category === filterCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const displayed = limit ? filtered.slice(0, limit) : filtered;
+  const sorted = [...filtered].sort((a, b) => {
+    if (!sortBy) return 0;
+    const aVal = (a[sortBy] ?? '').toString().toLowerCase();
+    const bVal = (b[sortBy] ?? '').toString().toLowerCase();
+    if (sortBy === 'star_rating' || sortBy === 'year') {
+      return sortDir === 'asc' ? (+a[sortBy] || 0) - (+b[sortBy] || 0) : (+b[sortBy] || 0) - (+a[sortBy] || 0);
+    }
+    return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+  });
+
+  const displayed = limit ? sorted.slice(0, limit) : sorted;
 
   return (
     <div className="card p-6">
@@ -112,10 +151,10 @@ export default function MovieList({ onEdit, limit, initialFilter = 'all' }) {
           <table className="w-full">
             <thead>
               <tr className="border-b border-pale-blush">
-                <th className="text-left py-3 px-2 font-body text-xs text-dusty-rose uppercase">Movie</th>
-                <th className="text-left py-3 px-2 font-body text-xs text-dusty-rose uppercase hidden md:table-cell">Category</th>
-                <th className="text-left py-3 px-2 font-body text-xs text-dusty-rose uppercase hidden sm:table-cell">Rating</th>
-                <th className="text-left py-3 px-2 font-body text-xs text-dusty-rose uppercase hidden lg:table-cell">Year</th>
+                <SortHeader column="title" label="Movie" sortBy={sortBy} sortDir={sortDir} onClick={handleSort} />
+                <SortHeader column="category" label="Category" sortBy={sortBy} sortDir={sortDir} onClick={handleSort} className="hidden md:table-cell" />
+                <SortHeader column="star_rating" label="Rating" sortBy={sortBy} sortDir={sortDir} onClick={handleSort} className="hidden sm:table-cell" />
+                <SortHeader column="year" label="Year" sortBy={sortBy} sortDir={sortDir} onClick={handleSort} className="hidden lg:table-cell" />
                 <th className="text-right py-3 px-2 font-body text-xs text-dusty-rose uppercase">Actions</th>
               </tr>
             </thead>

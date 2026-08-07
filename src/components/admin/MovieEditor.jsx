@@ -74,14 +74,29 @@ export default function MovieEditor({ movie, onSaved, onCancel }) {
         import.meta.env.VITE_SUPABASE_ANON_KEY
       );
 
+      // Remove non-editable fields before saving
+      const { id, created_at, updated_at, ...cleanForm } = form;
+
       if (isEditing) {
-        await supabase.from('movies').update(form).eq('id', movie.id);
+        const { error: updateError } = await supabase
+          .from('movies')
+          .update(cleanForm)
+          .eq('id', movie.id)
+          .select();
+        
+        if (updateError) throw updateError;
       } else {
-        await supabase.from('movies').insert(form);
+        const { error: insertError } = await supabase
+          .from('movies')
+          .insert(cleanForm)
+          .select();
+        
+        if (insertError) throw insertError;
       }
       onSaved();
     } catch (err) {
-      setError('Failed to save: ' + err.message);
+      setError('Save failed: ' + (err.message || 'Unknown error'));
+      console.error('CMS save error:', err);
     } finally {
       setSaving(false);
     }
